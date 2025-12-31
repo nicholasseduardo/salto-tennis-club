@@ -48,19 +48,14 @@ export default function App() {
   const [isSignUp, setIsSignUp] = useState(false);
 
   useEffect(() => {
-    // 1. Checa a sessão atual
-    const getInitialSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (session) {
-        setIsLoggedIn(true);
-      }
-    };
-    getInitialSession();
+    // Tenta recuperar a sessão atual (do localstorage ou da URL de confirmação)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setIsLoggedIn(true);
+    });
 
-    // 2. Ouve mudanças de estado (Login, Logout e CONFIRMAÇÃO DE EMAIL)
-    // O evento 'SIGNED_IN' dispara automaticamente quando o link do email é clicado!
+    // Escuta qualquer mudança (clique no link do e-mail é uma mudança 'SIGNED_IN')
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Evento Auth:", event); // Para você ver no console o que acontece
+      console.log("Evento de Autenticação:", event);
       if (session) {
         setIsLoggedIn(true);
       } else {
@@ -68,9 +63,7 @@ export default function App() {
       }
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {

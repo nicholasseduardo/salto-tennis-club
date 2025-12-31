@@ -1,6 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-client'
 
-const supabaseUrl = 'https://zzjuvujmclxncicjrpmb.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6anV2dWptY2x4bmNpY2pycG1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODU5NTEsImV4cCI6MjA4Mjc2MTk1MX0.SFx2SJJHyfAqw9DtmATPsMjuakjIij_9bwN266iDmwg';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true, // Garante que o login não se perca ao dar F5
+    autoRefreshToken: true,
+    detectSessionInUrl: true // Importante para capturar a confirmação de e-mail
+  }
+})
