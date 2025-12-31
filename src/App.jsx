@@ -98,31 +98,42 @@ export default function App() {
   }
   
   const handleSignUp = async () => {
-    const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-    });
-
-    if (error) {
-      alert("Erro no cadastro: " + error.message);
-      return;
+  const { data, error } = await supabase.auth.signUp({
+    email: email,
+    password: password,
+    options: {
+      // ESTA É A LINHA CHAVE:
+      // window.location.origin identifica automaticamente se você está no localhost 
+      // ou na URL da Vercel e avisa o Supabase para onde voltar após a confirmação.
+      emailRedirectTo: window.location.origin,
     }
+  });
 
-    if (data?.user) {
-      // Nota: O perfil só será criado com sucesso se o RLS permitir inserção de usuários não confirmados.
-      // Como alteramos a política para 'true' anteriormente, vai funcionar!
-      await supabase
-        .from('profiles')
-        .insert([{ 
+  if (error) {
+    alert("Erro no cadastro: " + error.message);
+    return;
+  }
+
+  if (data?.user) {
+    // 2. Insere na tabela 'profiles' usando o ID gerado
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert([
+        { 
           id: data.user.id, 
           full_name: email.split('@')[0],
           updated_at: new Date()
-        }]);
+        }
+      ]);
 
-      alert("Enviamos um link de confirmação para o seu e-mail! Por favor, valide sua conta para acessar o Club.");
-      setIsSignUp(false); // Volta para a tela de login para ele entrar após confirmar
+    if (profileError) {
+      console.error("Erro ao criar perfil na tabela:", profileError.message);
     }
-  };
+
+    alert("✅ Link enviado! Abra seu e-mail e clique no botão de confirmação para ativar sua conta no Club.");
+    setIsSignUp(false); // Volta para a tela de login
+  }
+};
 
   const handleLogin = async () => {
     const { data, error } = await supabase.auth.signInWithPassword({
