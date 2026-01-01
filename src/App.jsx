@@ -48,25 +48,6 @@ export default function App() {
   const [isSignUp, setIsSignUp] = useState(false);
 
   useEffect(() => {
-    // Tenta recuperar a sessão atual (do localstorage ou da URL de confirmação)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setIsLoggedIn(true);
-    });
-
-    // Escuta qualquer mudança (clique no link do e-mail é uma mudança 'SIGNED_IN')
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Evento de Autenticação:", event);
-      if (session) {
-        setIsLoggedIn(true);
-      } else {
-        setIsLoggedIn(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
     const timer = setTimeout(() => setIsSplash(false), 3000);
     return () => clearTimeout(timer);
   }, []);
@@ -97,52 +78,64 @@ export default function App() {
     times.push(`${h.toString().padStart(2,'0')}:30`); 
   }
 
-  const handleSignUp = async () => {
-    const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-      options: {
-        // Redireciona o usuário de volta para o link da Vercel após a confirmação
-        emailRedirectTo: window.location.origin,
-      }
+  // --- SISTEMA DE AUTENTICAÇÃO (VERSÃO LIMPA) ---
+  useEffect(() => {
+    // Sincroniza o login assim que o app abre ou o e-mail é confirmado
+    const syncAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+    syncAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
     });
 
-    if (error) {
-      alert("Erro no cadastro: " + error.message);
-      return;
-    }
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignUp = async () => {
+    if (!email || !password) return alert("Preencha todos os campos");
+    
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
+      password: password,
+      options: { emailRedirectTo: window.location.origin }
+    });
+
+    if (error) return alert("Erro: " + error.message);
 
     if (data?.user) {
-      // Insere na tabela 'profiles' usando o ID gerado pelo Auth
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          { 
-            id: data.user.id, 
-            full_name: email.split('@')[0],
-            updated_at: new Date()
-          }
-        ]);
-
-      if (profileError) {
-        console.error("Erro ao criar perfil na tabela:", profileError.message);
-      }
-
-      alert("✅ Link enviado! Verifique seu e-mail e confirme a conta para acessar o Club.");
-      setIsSignUp(false); // Volta para a tela de login
+      await supabase.from('profiles').upsert({ 
+        id: data.user.id, 
+        full_name: email.split('@')[0],
+        updated_at: new Date()
+      });
+      alert("📧 Link enviado! Verifique seu e-mail para ativar sua conta.");
+      setIsSignUp(false);
     }
   };
 
   const handleLogin = async () => {
+    if (!email || !password) return alert("Digite e-mail e senha");
+    
+    // Normalizamos para garantir que espaços e letras grandes não atrapalhem
+    const cleanEmail = email.trim().toLowerCase();
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
+      email: cleanEmail,
       password: password,
     });
 
     if (error) {
-      alert("Erro no acesso: Verifique se o e-mail e senha estão corretos.");
-    } else {
-      setIsLoggedIn(true);
+      console.error("Erro detalhado do Supabase:", error.message);
+      
+      // Se o erro for 'Invalid login credentials', pode ser que a senha 
+      // digitada no cadastro tenha tido algum erro sem você perceber.
+      const msg = error.message.includes("Email not confirmed") 
+        ? "Confirme seu e-mail antes de entrar!" 
+        : "E-mail ou senha incorretos. Tente novamente.";
+      alert(msg);
     }
   };
 
