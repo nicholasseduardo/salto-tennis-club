@@ -103,25 +103,26 @@ export default function App() {
   const handleSignUp = async () => {
     if (!email || !password) return alert("Preencha e-mail e senha");
     
+    // 1. Cria o usuário
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password: password,
-      options: {
-        emailRedirectTo: window.location.origin, // Faz o link do e-mail voltar para onde você está
-      }
     });
 
-    if (error) return alert("Erro no cadastro: " + error.message);
+    if (error) return alert("Erro: " + error.message);
 
     if (data?.user) {
-      // Cria o perfil na tabela 'profiles'
+      // 2. Cria o perfil manualmente para garantir
       await supabase.from('profiles').upsert({ 
         id: data.user.id, 
         full_name: email.split('@')[0],
         updated_at: new Date()
       });
-      alert("✅ Quase pronto! Verifique seu e-mail e clique no link para ativar sua conta.");
-      setIsSignUp(false);
+      
+      // 3. Como desligamos a confirmação, o Supabase já loga. 
+      // Vamos apenas forçar a interface a atualizar:
+      setIsLoggedIn(true);
+      alert("Conta criada com sucesso!");
     }
   };
 
