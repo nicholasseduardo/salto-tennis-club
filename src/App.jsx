@@ -46,6 +46,8 @@ export default function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [Name, setName] = useState("");
+  const [surName, setSurName] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => setIsSplash(false), 3000);
@@ -101,9 +103,8 @@ export default function App() {
 
   // FUNÇÃO DE CADASTRO
   const handleSignUp = async () => {
-    if (!email || !password) return alert("Preencha e-mail e senha");
+    if (!email || !password || !Name) return alert("Preencha ao menos Nome, E-mail e Senha");
     
-    // 1. Cria o usuário
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password: password,
@@ -112,17 +113,14 @@ export default function App() {
     if (error) return alert("Erro: " + error.message);
 
     if (data?.user) {
-      // 2. Cria o perfil manualmente para garantir
       await supabase.from('profiles').upsert({ 
         id: data.user.id, 
-        full_name: email.split('@')[0],
+        name: Name,
+        sur_name: surName, // Adicionado aqui
         updated_at: new Date()
       });
-      
-      // 3. Como desligamos a confirmação, o Supabase já loga. 
-      // Vamos apenas forçar a interface a atualizar:
       setIsLoggedIn(true);
-      alert("Conta criada com sucesso!");
+      alert("Bem-vindo(a), " + Name + "!");
     }
   };
 
@@ -250,8 +248,31 @@ export default function App() {
         </div>
 
         <div className="space-y-4">
-          {/* INPUTS DE LOGIN / CADASTRO */}
           <div className="space-y-3">
+            {/* CAMPOS DE NOME E SOBRENOME (Aparecem apenas no Cadastro) */}
+            {isSignUp && (
+              <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+                <div className="relative group">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-amber-400 transition-colors" size={18} />
+                  <input 
+                    type="text" 
+                    value={Name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Nome" 
+                    className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-5 pl-12 pr-4 text-white focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-700 font-sans" 
+                  />
+                </div>
+                <input 
+                  type="text" 
+                  value={surName}
+                  onChange={(e) => setSurName(e.target.value)}
+                  placeholder="Sobrenome" 
+                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-5 px-5 text-white focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-700 font-sans" 
+                />
+              </div>
+            )}
+
+            {/* E-MAIL */}
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-amber-400 transition-colors" size={20} />
               <input 
@@ -262,6 +283,8 @@ export default function App() {
                 className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-5 pl-12 pr-4 text-white focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-700 font-sans" 
               />
             </div>
+
+            {/* SENHA */}
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-amber-400 transition-colors" size={20} />
               <input 
@@ -272,6 +295,7 @@ export default function App() {
                 className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-5 pl-12 pr-4 text-white focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-700 font-sans" 
               />
             </div>
+
             <button 
               onClick={isSignUp ? handleSignUp : handleLogin}
               className="w-full py-5 bg-amber-400 text-black font-black uppercase rounded-2xl text-[11px] tracking-[0.2em] shadow-2xl active:scale-95 transition-all font-sans"
@@ -280,7 +304,6 @@ export default function App() {
             </button>
           </div>
 
-          {/* BOTÃO PARA ALTERNAR ENTRE LOGIN E CADASTRO */}
           <button 
             onClick={() => setIsSignUp(!isSignUp)}
             className="w-full text-center text-slate-500 text-[10px] uppercase font-bold tracking-widest hover:text-amber-400 transition-colors font-sans py-2"
@@ -288,7 +311,6 @@ export default function App() {
             {isSignUp ? 'Já possui uma conta? Fazer Login' : 'Novo por aqui? Criar conta de sócio'}
           </button>
 
-          {/* SÓ MOSTRA OS BOTÕES SOCIAIS SE FOR CADASTRO (isSignUp === true) */}
           {isSignUp && (
             <div className="animate-in fade-in zoom-in duration-500 space-y-6 pt-4">
               <div className="flex items-center gap-4">
@@ -757,14 +779,39 @@ export default function App() {
         );
 
       case 'profile':
+        // Criamos as iniciais dinamicamente
+        const initials = (Name.charAt(0) + (surName.charAt(0) || "")).toUpperCase();
+
         return (
           <div className="space-y-8 animate-in slide-in-from-right duration-500 text-left font-sans text-slate-100">
-            {/* ... seu código existente do perfil ... */}
+            <div className="flex flex-col items-center space-y-4 py-8">
+              {/* Avatar com iniciais reais */}
+              <div className="w-24 h-24 bg-gradient-to-tr from-amber-600 to-amber-300 rounded-full flex items-center justify-center text-black text-3xl font-black italic shadow-2xl border-4 border-slate-900">
+                {initials || "ST"}
+              </div>
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-white">{Name} {surName}</h3>
+                <p className="text-slate-500 text-xs uppercase tracking-widest font-bold">Sócio Vitalício</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl flex justify-between items-center">
+                <span className="text-[10px] text-slate-500 uppercase font-bold">E-mail</span>
+                <span className="text-sm text-slate-200">{email}</span>
+              </div>
+              <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl flex justify-between items-center">
+                <span className="text-[10px] text-slate-500 uppercase font-bold">Status da Conta</span>
+                <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded font-black uppercase">Ativa</span>
+              </div>
+            </div>
             
             <button 
               onClick={async () => {
                 await supabase.auth.signOut();
                 setIsLoggedIn(false);
+                setName(""); // Limpa o nome ao sair
+                setSurName("");
               }}
               className="w-full py-4 border border-red-500/20 text-red-500 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-red-500/10 transition-all"
             >
@@ -772,10 +819,6 @@ export default function App() {
             </button>
           </div>
         );
-
-      default:
-        return null;
-    }
   };
 
   return (
