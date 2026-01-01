@@ -819,6 +819,10 @@ export default function App() {
             </button>
           </div>
         );
+
+      default:
+        return null;
+    }
   };
 
   return (
