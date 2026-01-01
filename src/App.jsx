@@ -80,14 +80,19 @@ export default function App() {
 
   // MONITOR DE SESSÃO: Detecta login, logout e volta do e-mail
   useEffect(() => {
-    // Checa se já existe alguém logado ao abrir o site
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsLoggedIn(!!session);
-    });
+    // Se houver erro na URL (como o que você recebeu), removemos para não travar o app
+    if (window.location.hash.includes('error')) {
+      alert("O link expirou ou já foi usado. Tente fazer o login direto ou solicite novo link.");
+      window.history.replaceState(null, '', window.location.origin);
+    }
 
-    // Escuta eventos do Supabase (clique no link do e-mail gera o evento 'SIGNED_IN')
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Evento Auth:", event);
+    const syncAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+    };
+    syncAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session);
     });
 
