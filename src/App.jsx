@@ -78,64 +78,63 @@ export default function App() {
     times.push(`${h.toString().padStart(2,'0')}:30`); 
   }
 
-  // --- SISTEMA DE AUTENTICAÇÃO (VERSÃO LIMPA) ---
+  // MONITOR DE SESSÃO: Detecta login, logout e volta do e-mail
   useEffect(() => {
-    // Sincroniza o login assim que o app abre ou o e-mail é confirmado
-    const syncAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    // Checa se já existe alguém logado ao abrir o site
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session);
-    };
-    syncAuth();
+    });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Escuta eventos do Supabase (clique no link do e-mail gera o evento 'SIGNED_IN')
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Evento Auth:", event);
       setIsLoggedIn(!!session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  // FUNÇÃO DE CADASTRO
   const handleSignUp = async () => {
-    if (!email || !password) return alert("Preencha todos os campos");
+    if (!email || !password) return alert("Preencha e-mail e senha");
     
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password: password,
-      options: { emailRedirectTo: window.location.origin }
+      options: {
+        emailRedirectTo: window.location.origin, // Faz o link do e-mail voltar para onde você está
+      }
     });
 
-    if (error) return alert("Erro: " + error.message);
+    if (error) return alert("Erro no cadastro: " + error.message);
 
     if (data?.user) {
+      // Cria o perfil na tabela 'profiles'
       await supabase.from('profiles').upsert({ 
         id: data.user.id, 
         full_name: email.split('@')[0],
         updated_at: new Date()
       });
-      alert("📧 Link enviado! Verifique seu e-mail para ativar sua conta.");
+      alert("✅ Quase pronto! Verifique seu e-mail e clique no link para ativar sua conta.");
       setIsSignUp(false);
     }
   };
 
+  // FUNÇÃO DE LOGIN
   const handleLogin = async () => {
     if (!email || !password) return alert("Digite e-mail e senha");
     
-    // Normalizamos para garantir que espaços e letras grandes não atrapalhem
-    const cleanEmail = email.trim().toLowerCase();
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: cleanEmail,
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
       password: password,
     });
 
     if (error) {
-      console.error("Erro detalhado do Supabase:", error.message);
-      
-      // Se o erro for 'Invalid login credentials', pode ser que a senha 
-      // digitada no cadastro tenha tido algum erro sem você perceber.
-      const msg = error.message.includes("Email not confirmed") 
-        ? "Confirme seu e-mail antes de entrar!" 
-        : "E-mail ou senha incorretos. Tente novamente.";
-      alert(msg);
+      if (error.message.includes("Email not confirmed")) {
+        alert("E-mail ainda não confirmado! Verifique sua caixa de entrada.");
+      } else {
+        alert("Dados incorretos ou usuário inexistente.");
+      }
     }
   };
 
