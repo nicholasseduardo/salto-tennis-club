@@ -39,6 +39,8 @@ export default function App() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [myReservations, setMyReservations] = useState([]);
   const [favMatches, setFavMatches] = useState([]);
+  const [activeReservation, setActiveReservation] = useState(null); // Guarda qual reserva está sendo editada
+  const [matchResult, setMatchResult] = useState({ type: 'Jogo', result: 'Vitória', score: '' });
   const [selectedLessonLevel, setSelectedLessonLevel] = useState('Todos');
   const [tourneyViewMode, setTourneyViewMode] = useState('list');
   const [partners, setPartners] = useState([]);
@@ -220,6 +222,43 @@ export default function App() {
     }
   };
 
+  const updateMatchResult = async (reservationId, type, result, score) => {
+    // 1. Atualiza a reserva no banco
+    const { error: resError } = await supabase
+      .from('reservations')
+      .update({ 
+        usage_type: type, 
+        result: result, 
+        score: score, 
+        completed: true 
+      })
+      .eq('id', reservationId);
+
+    if (resError) return alert("Erro ao salvar resultado");
+
+    // 2. Se for 'Jogo' (competitivo), atualiza as estatísticas do perfil
+    if (type === 'Jogo') {
+      const newWins = result === 'Vitória' ? stats.wins + 1 : stats.wins;
+      const newLosses = result === 'Derrota' ? stats.losses + 1 : stats.losses;
+      const newMatches = stats.matches + 1;
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          win_count: newWins, 
+          loss_count: newLosses, 
+          matches_played: newMatches 
+        })
+        .eq('id', (await supabase.auth.getUser()).data.user.id);
+
+      if (!profileError) {
+        // Atualiza a tela na hora
+        setStats({ ...stats, wins: newWins, losses: newLosses, matches: newMatches });
+        alert("Resultado registrado e estatísticas atualizadas!");
+      }
+    }
+  };
+
   const toggleFavoriteMatch = (matchName, timeInfo) => {
     if (favMatches.find(m => m.id === matchName)) {
       setFavMatches(favMatches.filter(m => m.id !== matchName));
@@ -387,7 +426,7 @@ export default function App() {
                 </p>
               </div>
 
-              {/* NOVA SEÇÃO: CLUB BULLETIN (AVISOS) */}
+              {/* CLUB BULLETIN */}
               <section className="animate-in slide-in-from-right duration-500 delay-200">
                 <div className="flex items-center justify-between mb-4 px-1">
                   <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] font-bold">Avisos do Clube</h3>
@@ -415,7 +454,7 @@ export default function App() {
                 </div>
               </section>
 
-              {/* AGENDA */}
+              {/* AGENDA - AGORA CLICÁVEL PARA PLACAR */}
               {(myReservations.length > 0 || favMatches.length > 0) && (
                 <section className="animate-in slide-in-from-left duration-500 text-left">
                   <div className="flex justify-between items-center mb-4">
@@ -424,26 +463,30 @@ export default function App() {
                   </div>
                   <div className="space-y-3">
                     {myReservations.slice(0, 1).map(res => (
-                      <div key={res.id} className="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl flex justify-between items-center">
+                      <div 
+                        key={res.id} 
+                        onClick={() => {
+                          if (!res.completed) {
+                            setActiveReservation(res);
+                            setBookingStep('post_match');
+                          }
+                        }}
+                        className={`p-5 rounded-2xl flex justify-between items-center transition-all group cursor-pointer ${res.completed ? 'bg-emerald-500/5 border border-emerald-500/20' : 'bg-slate-900/50 border border-slate-800 hover:border-amber-400/50'}`}
+                      >
                           <div className="flex gap-4 items-center font-sans">
-                            <div className="w-12 h-12 bg-amber-400/10 rounded-xl flex items-center justify-center text-amber-400 font-bold">{res.date.split(' ')[0]}</div>
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${res.completed ? 'bg-emerald-500/20 text-emerald-500' : 'bg-amber-400/10 text-amber-400'}`}>
+                              {res.completed ? <CheckCircle2 size={20} /> : res.date.split(' ')[0]}
+                            </div>
                             <div>
-                              <p className="text-sm font-bold">{res.category}</p>
-                              <p className="text-[10px] text-slate-500 uppercase">{res.time} • {res.detail}</p>
+                              <p className={`text-sm font-bold ${res.completed ? 'text-emerald-500' : 'text-white'}`}>
+                                {res.category} {res.completed && '• Finalizado'}
+                              </p>
+                              <p className="text-[10px] text-slate-500 uppercase">
+                                {res.completed ? `Placar: ${res.score}` : `${res.time} • Lançar Placar`}
+                              </p>
                             </div>
                           </div>
-                          <Clock size={16} className="text-slate-700" />
-                      </div>
-                    ))}
-                    {favMatches.map(match => (
-                      <div key={match.id} className="bg-slate-900/30 border border-dashed border-amber-400/30 p-5 rounded-2xl flex justify-between items-center font-sans">
-                        <div className="flex gap-4 items-center">
-                          <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-amber-400"><Star size={18} fill="currentColor" /></div>
-                          <div>
-                            <p className="text-sm font-bold">{match.name}</p>
-                            <p className="text-[10px] text-amber-400 uppercase font-bold tracking-tighter">Evento p/ Assistir • {match.time}</p>
-                          </div>
-                        </div>
+                          {!res.completed && <Trophy size={16} className="text-slate-700 group-hover:text-amber-400 transition-colors" />}
                       </div>
                     ))}
                   </div>
@@ -464,13 +507,66 @@ export default function App() {
           );
         }
 
-        if (bookingStep === 'category') {
-          const categories = { 'Quadra': ['Tênis Estádio (Central)', 'Tênis Saibro Coberta', 'Tênis Saibro Aberta', 'Tênis Rápida Coberta', 'Tênis Rápida Aberta', 'Padel', 'Squash', 'Pickleball'], 'Wellness': ['Fisioterapia', 'Massagem', 'Recovery'], 'Gastronomia': ['Mesa Salão', 'Mesa Deck'], 'Equipamentos': ['Encordoamento', 'Troca de Grip'], 'Torneio': ['Simples Masculino A', 'Duplas Open'] };
+        if (bookingStep === 'post_match') {
           return (
-            <div className="animate-in slide-in-from-right duration-500 space-y-6 max-w-2xl mx-auto text-left font-sans text-slate-100">
-              <button onClick={() => setBookingStep('menu')} className="text-slate-500 flex items-center gap-1 text-sm font-sans font-bold"><ChevronRight size={16} className="rotate-180"/> Voltar</button>
-              <h3 className="text-2xl font-light italic text-white font-sans">Selecione o serviço</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-100">{categories[selectedService]?.map(cat => (<button key={cat} onClick={() => { setSelectedCategory(cat); setBookingStep('datetime'); }} className="p-6 bg-slate-900 border border-slate-800 rounded-2xl text-left flex justify-between items-center hover:border-amber-500/50 group transition-all font-sans"><span className="font-medium text-sm">{cat}</span><ChevronRight size={18} className="text-amber-400 group-hover:translate-x-1 transition-transform font-sans" /></button>))}</div>
+            <div className="animate-in fade-in zoom-in-95 duration-500 max-w-md mx-auto text-left font-sans text-slate-100 pb-20">
+              <button onClick={() => setBookingStep('menu')} className="text-slate-500 text-xs flex items-center gap-1 mb-6 font-bold uppercase tracking-widest">
+                <ChevronRight size={14} className="rotate-180"/> Voltar à Agenda
+              </button>
+              
+              <h3 className="text-3xl font-light italic text-white mb-2 leading-none">Resultado da <br/><span className="text-amber-400">Partida.</span></h3>
+              <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black mb-10">{activeReservation?.category} • {activeReservation?.date}</p>
+
+              <div className="space-y-8">
+                {/* TIPO DE USO */}
+                <div className="space-y-3">
+                  <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest px-1">Qual foi o objetivo?</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['Jogo', 'Treino', 'Rápido'].map(t => (
+                      <button key={t} onClick={() => setMatchResult({...matchResult, type: t})} className={`py-4 rounded-2xl border text-[10px] font-black uppercase transition-all ${matchResult.type === t ? 'bg-amber-400 border-amber-400 text-black shadow-lg shadow-amber-400/20' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>{t}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* RESULTADO (LÓGICA COMPETITIVA) */}
+                {matchResult.type === 'Jogo' && (
+                  <div className="space-y-3 animate-in slide-in-from-top-4 duration-500">
+                    <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest px-1">Resultado Final</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => setMatchResult({...matchResult, result: 'Vitória'})} className={`py-5 rounded-3xl border flex flex-col items-center gap-2 transition-all ${matchResult.result === 'Vitória' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' : 'bg-slate-900 border-slate-800 text-slate-600'}`}>
+                        <Trophy size={20} />
+                        <span className="text-[10px] font-black uppercase">Vitória</span>
+                      </button>
+                      <button onClick={() => setMatchResult({...matchResult, result: 'Derrota'})} className={`py-5 rounded-3xl border flex flex-col items-center gap-2 transition-all ${matchResult.result === 'Derrota' ? 'bg-red-500/10 border-red-500 text-red-500' : 'bg-slate-900 border-slate-800 text-slate-600'}`}>
+                        <X size={20} />
+                        <span className="text-[10px] font-black uppercase">Derrota</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* CAMPO DE PLACAR */}
+                <div className="space-y-3">
+                  <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest px-1">Placar dos Sets</p>
+                  <input 
+                    type="text" 
+                    value={matchResult.score}
+                    onChange={(e) => setMatchResult({...matchResult, score: e.target.value})}
+                    placeholder="Ex: 6/4 6/2"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-3xl py-6 px-6 text-white text-2xl font-mono text-center focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-800 shadow-inner"
+                  />
+                </div>
+
+                <button 
+                  onClick={() => {
+                    updateMatchResult(activeReservation.id, matchResult.type, matchResult.result, matchResult.score);
+                    setBookingStep('menu');
+                  }}
+                  className="w-full py-6 bg-white text-black font-black uppercase rounded-3xl text-xs tracking-[0.3em] shadow-2xl active:scale-95 transition-all mt-6"
+                >
+                  Registrar na Performance
+                </button>
+              </div>
             </div>
           );
         }
@@ -642,6 +738,77 @@ export default function App() {
               >
                 Finalizar Solicitação
               </button>
+            </div>
+          );
+        }
+
+        if (bookingStep === 'post_match') {
+          return (
+            <div className="animate-in fade-in zoom-in-95 duration-500 max-w-md mx-auto text-left font-sans text-slate-100 pb-20">
+              <button onClick={() => setBookingStep('menu')} className="text-slate-500 text-sm flex items-center gap-1 mb-6 font-bold uppercase tracking-widest">
+                <ChevronRight size={16} className="rotate-180"/> Cancelar
+              </button>
+              
+              <h3 className="text-2xl font-light italic text-white mb-2">Finalizar Partida</h3>
+              <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mb-8">Reserva: {activeReservation?.category} - {activeReservation?.date}</p>
+
+              <div className="space-y-8">
+                {/* TIPO DE USO */}
+                <section className="space-y-3">
+                  <p className="text-[10px] text-amber-400 uppercase font-black tracking-widest">Tipo de Atividade</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['Jogo', 'Treino', 'Rápido'].map(t => (
+                      <button 
+                        key={t}
+                        onClick={() => setMatchResult({...matchResult, type: t})}
+                        className={`py-3 rounded-xl border text-[10px] font-black uppercase transition-all ${matchResult.type === t ? 'bg-amber-400 border-amber-400 text-black' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                {/* RESULTADO (Só aparece se for 'Jogo') */}
+                {matchResult.type === 'Jogo' && (
+                  <section className="space-y-3 animate-in slide-in-from-left duration-300">
+                    <p className="text-[10px] text-amber-400 uppercase font-black tracking-widest">Resultado</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button 
+                        onClick={() => setMatchResult({...matchResult, result: 'Vitória'})}
+                        className={`py-4 rounded-2xl border flex items-center justify-center gap-2 font-bold ${matchResult.result === 'Vitória' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500' : 'bg-slate-900 border-slate-800 text-slate-600'}`}
+                      >
+                        <Trophy size={16} /> Vitória
+                      </button>
+                      <button 
+                        onClick={() => setMatchResult({...matchResult, result: 'Derrota'})}
+                        className={`py-4 rounded-2xl border flex items-center justify-center gap-2 font-bold ${matchResult.result === 'Derrota' ? 'bg-red-500/20 border-red-500 text-red-500' : 'bg-slate-900 border-slate-800 text-slate-600'}`}
+                      >
+                        <X size={16} /> Derrota
+                      </button>
+                    </div>
+                  </section>
+                )}
+
+                {/* PLACAR */}
+                <section className="space-y-3">
+                  <p className="text-[10px] text-amber-400 uppercase font-black tracking-widest">Placar Final (Ex: 6/4 6/2)</p>
+                  <input 
+                    type="text" 
+                    value={matchResult.score}
+                    onChange={(e) => setMatchResult({...matchResult, score: e.target.value})}
+                    placeholder="0/0 0/0"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-5 px-6 text-white text-xl font-mono focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-800"
+                  />
+                </section>
+
+                <button 
+                  onClick={() => updateMatchResult(activeReservation.id, matchResult.type, matchResult.result, matchResult.score)}
+                  className="w-full py-5 bg-white text-black font-black uppercase rounded-2xl text-xs tracking-[0.2em] shadow-2xl active:scale-95 transition-all mt-4"
+                >
+                  Confirmar e Salvar
+                </button>
+              </div>
             </div>
           );
         }
