@@ -48,6 +48,7 @@ export default function App() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [Name, setName] = useState("");
   const [surName, setSurName] = useState("");
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsSplash(false), 3000);
@@ -80,22 +81,47 @@ export default function App() {
     times.push(`${h.toString().padStart(2,'0')}:30`); 
   }
 
-  // MONITOR DE SESSÃO: Detecta login, logout e volta do e-mail
+  // --- SISTEMA DE AUTENTICAÇÃO COM BUSCA DE PERFIL ---
   useEffect(() => {
-    // Se houver erro na URL (como o que você recebeu), removemos para não travar o app
+    // Função interna para buscar os dados do perfil (Nome e Sobrenome)
+    const fetchProfile = async (userId) => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('name, sur_name')
+        .eq('id', userId)
+        .single();
+      
+      if (data) {
+        setName(data.name || "");
+        setSurName(data.sur_name || "");
+      }
+    };
+
+    // 1. Limpa erros de URL (caso o link de e-mail expire)
     if (window.location.hash.includes('error')) {
-      alert("O link expirou ou já foi usado. Tente fazer o login direto ou solicite novo link.");
       window.history.replaceState(null, '', window.location.origin);
     }
 
+    // 2. Checa sessão ao carregar a página
     const syncAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setIsLoggedIn(!!session);
+      if (session) {
+        setIsLoggedIn(true);
+        fetchProfile(session.user.id); // Busca o nome se estiver logado
+      }
     };
     syncAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsLoggedIn(!!session);
+    // 3. Escuta mudanças (Login/Logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setIsLoggedIn(true);
+        fetchProfile(session.user.id);
+      } else {
+        setIsLoggedIn(false);
+        setName("");
+        setSurName("");
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -113,10 +139,11 @@ export default function App() {
     if (error) return alert("Erro: " + error.message);
 
     if (data?.user) {
+      // Salva o nome e sobrenome na tabela profiles
       await supabase.from('profiles').upsert({ 
         id: data.user.id, 
         name: Name,
-        sur_name: surName, // Adicionado aqui
+        sur_name: surName,
         updated_at: new Date()
       });
       setIsLoggedIn(true);
@@ -134,12 +161,9 @@ export default function App() {
     });
 
     if (error) {
-      if (error.message.includes("Email not confirmed")) {
-        alert("E-mail ainda não confirmado! Verifique sua caixa de entrada.");
-      } else {
-        alert("Dados incorretos ou usuário inexistente.");
-      }
+      alert("Dados incorretos ou usuário inexistente.");
     }
+    // O useEffect acima detectará o sucesso e preencherá o nome sozinho!
   };
 
   const handleConfirmBooking = async () => {
@@ -779,19 +803,22 @@ export default function App() {
         );
 
       case 'profile':
-        // Criamos as iniciais dinamicamente
-        const initials = (Name.charAt(0) + (surName.charAt(0) || "")).toUpperCase();
+        // Pega as iniciais do estado Name e surName que agora são preenchidos pelo banco
+        const initialName = Name?.charAt(0) || "";
+        const initialSurName = surName?.charAt(0) || "";
+        const initials = (initialName + initialSurName).toUpperCase() || "ST";
 
         return (
           <div className="space-y-8 animate-in slide-in-from-right duration-500 text-left font-sans text-slate-100">
             <div className="flex flex-col items-center space-y-4 py-8">
-              {/* Avatar com iniciais reais */}
               <div className="w-24 h-24 bg-gradient-to-tr from-amber-600 to-amber-300 rounded-full flex items-center justify-center text-black text-3xl font-black italic shadow-2xl border-4 border-slate-900">
-                {initials || "ST"}
+                {initials}
               </div>
               <div className="text-center">
-                <h3 className="text-2xl font-bold text-white">{Name} {surName}</h3>
-                <p className="text-slate-500 text-xs uppercase tracking-widest font-bold">Sócio Vitalício</p>
+                <h3 className="text-2xl font-bold text-white">
+                  {Name} {surName}
+                </h3>
+                <p className="text-slate-500 text-xs uppercase tracking-widest font-bold">Sócio</p>
               </div>
             </div>
 
@@ -810,7 +837,7 @@ export default function App() {
               onClick={async () => {
                 await supabase.auth.signOut();
                 setIsLoggedIn(false);
-                setName(""); // Limpa o nome ao sair
+                setName(""); 
                 setSurName("");
               }}
               className="w-full py-4 border border-red-500/20 text-red-500 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-red-500/10 transition-all"
