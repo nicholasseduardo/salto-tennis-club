@@ -49,6 +49,7 @@ export default function App() {
   const [Name, setName] = useState("");
   const [surName, setSurName] = useState("");
   const [userProfile, setUserProfile] = useState(null);
+  const [stats, setStats] = useState({ wins: 0, losses: 0, matches: 0, since: "" });
 
   useEffect(() => {
     const timer = setTimeout(() => setIsSplash(false), 3000);
@@ -87,13 +88,19 @@ export default function App() {
     const fetchProfile = async (userId) => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('name, sur_name')
+        .select('name, sur_name, win_count, loss_count, matches_played, member_since')
         .eq('id', userId)
         .single();
       
       if (data) {
         setName(data.name || "");
         setSurName(data.sur_name || "");
+        setStats({
+          wins: data.win_count || 0,
+          losses: data.loss_count || 0,
+          matches: data.matches_played || 0,
+          since: data.member_since || ""
+        });
       }
     };
 
@@ -803,33 +810,58 @@ export default function App() {
         );
 
       case 'profile':
-        // Pega as iniciais do estado Name e surName que agora são preenchidos pelo banco
-        const initialName = Name?.charAt(0) || "";
-        const initialSurName = surName?.charAt(0) || "";
-        const initials = (initialName + initialSurName).toUpperCase() || "ST";
+        const initials = (Name.charAt(0) + (surName.charAt(0) || "")).toUpperCase() || "ST";
+        // Cálculo de aproveitamento (ex: 75% de vitórias)
+        const winRate = stats.matches > 0 ? Math.round((stats.wins / stats.matches) * 100) : 0;
 
         return (
           <div className="space-y-8 animate-in slide-in-from-right duration-500 text-left font-sans text-slate-100">
-            <div className="flex flex-col items-center space-y-4 py-8">
+            {/* CABEÇALHO DO PERFIL */}
+            <div className="flex flex-col items-center space-y-4 py-6">
               <div className="w-24 h-24 bg-gradient-to-tr from-amber-600 to-amber-300 rounded-full flex items-center justify-center text-black text-3xl font-black italic shadow-2xl border-4 border-slate-900">
                 {initials}
               </div>
               <div className="text-center">
-                <h3 className="text-2xl font-bold text-white">
-                  {Name} {surName}
-                </h3>
-                <p className="text-slate-500 text-xs uppercase tracking-widest font-bold">Sócio</p>
+                <h3 className="text-2xl font-bold text-white">{Name} {surName}</h3>
+                <p className="text-amber-500/80 text-[10px] uppercase tracking-[0.3em] font-black">Sócio desde {new Date(stats.since).getFullYear() || '2024'}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl flex justify-between items-center">
-                <span className="text-[10px] text-slate-500 uppercase font-bold">E-mail</span>
-                <span className="text-sm text-slate-200">{email}</span>
+            {/* GRID DE ESTATÍSTICAS REAIS */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl text-center">
+                <p className="text-[8px] text-slate-500 uppercase font-black mb-1">Partidas</p>
+                <p className="text-xl font-light text-white italic">{stats.matches}</p>
               </div>
-              <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl flex justify-between items-center">
-                <span className="text-[10px] text-slate-500 uppercase font-bold">Status da Conta</span>
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded font-black uppercase">Ativa</span>
+              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl text-center border-b-emerald-500/50">
+                <p className="text-[8px] text-emerald-500 uppercase font-black mb-1">Vitórias</p>
+                <p className="text-xl font-bold text-emerald-400 italic">{stats.wins}</p>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl text-center border-b-red-500/50">
+                <p className="text-[8px] text-red-500 uppercase font-black mb-1">Derrotas</p>
+                <p className="text-xl font-bold text-red-400 italic">{stats.losses}</p>
+              </div>
+            </div>
+
+            {/* CARD DE APROVEITAMENTO */}
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-800 p-5 rounded-2xl">
+              <div className="flex justify-between items-end mb-2">
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Win Rate (Aproveitamento)</span>
+                <span className="text-amber-400 font-black italic">{winRate}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-full bg-amber-400 transition-all duration-1000" style={{ width: `${winRate}%` }}></div>
+              </div>
+            </div>
+
+            {/* INFORMAÇÕES DA CONTA */}
+            <div className="space-y-3">
+              <div className="bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                   <Mail size={14} className="text-slate-500" />
+                   <span className="text-xs text-slate-300">{email}</span>
+                </div>
+                <span className="text-[8px] bg-slate-800 text-slate-500 px-2 py-1 rounded uppercase font-bold">Verificado</span>
               </div>
             </div>
             
@@ -837,10 +869,8 @@ export default function App() {
               onClick={async () => {
                 await supabase.auth.signOut();
                 setIsLoggedIn(false);
-                setName(""); 
-                setSurName("");
               }}
-              className="w-full py-4 border border-red-500/20 text-red-500 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-red-500/10 transition-all"
+              className="w-full py-4 border border-red-500/20 text-red-500 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-red-500/10 transition-all mt-4"
             >
               Sair da Conta (Logout)
             </button>
