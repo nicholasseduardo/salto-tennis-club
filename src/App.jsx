@@ -412,10 +412,14 @@ export default function App() {
   }
 
   const renderContent = () => {
+    console.log("Aba Ativa:", activeTab); // Isso vai aparecer no console
+    console.log("Passo de Reserva:", bookingStep); // Isso também
     switch (activeTab) {
       case 'Home':
+        console.log("Entrou no case Home");
         // 1. TELA PRINCIPAL (MENU)
         if (bookingStep === 'menu') {
+          console.log("Entrou no menu");
           return (
             <div className="space-y-8 animate-in fade-in duration-700 font-sans text-slate-100">
               {/* IA INSIGHT */}
@@ -509,6 +513,9 @@ export default function App() {
             </div>
           );
         }
+        // Se chegar aqui e a tela estiver preta, o erro está aqui embaixo!
+        console.log("Não caiu em nenhum IF dentro de Home"); 
+        return <div>Erro: Passo {bookingStep} não encontrado</div>;
 
         // 2. TELA DE PLACAR (POST-MATCH)
         if (bookingStep === 'post_match') {
