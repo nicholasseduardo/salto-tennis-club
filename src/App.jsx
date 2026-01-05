@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Users, Activity, Calendar, Coffee, Sparkles, ChevronRight, Trophy, CheckCircle2, X, Clock, MapPin, Hammer, User, TrendingUp, Star, Mail, Lock, ShieldCheck, GraduationCap } from 'lucide-react';
+import { Bell, Users, Activity, Calendar, Coffee, Sparkles, ChevronRight, 
+  Trophy, CheckCircle2, X, Clock, MapPin, Hammer, User, TrendingUp, Star, 
+  Mail, Lock, ShieldCheck, GraduationCap, Calendar, Sparkles, Coffee, Hammer,
+  ChevronRight, Clock, Star, Trophy, X, CheckCircle2, Mail, Activity, TrendingUp, Users } from 'lucide-react';
 import Logo from '/Logo.svg';
 import { supabase } from './supabaseClient'; 
 
@@ -455,10 +458,10 @@ export default function App() {
               </section>
 
               {/* AGENDA - AGORA CLICÁVEL PARA PLACAR */}
-              {(myReservations.length > 0 || favMatches.length > 0) && (
+              {myReservations.length > 0 && (
                 <section className="animate-in slide-in-from-left duration-500 text-left">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] font-bold">Sua Agenda</h3>
+                    <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] font-bold text-slate-100">Sua Agenda</h3>
                     <button onClick={() => setBookingStep('view_reservations')} className="text-amber-400 text-[10px] font-bold uppercase underline">Ver Todos</button>
                   </div>
                   <div className="space-y-3">
@@ -473,20 +476,20 @@ export default function App() {
                         }}
                         className={`p-5 rounded-2xl flex justify-between items-center transition-all group cursor-pointer ${res.completed ? 'bg-emerald-500/5 border border-emerald-500/20' : 'bg-slate-900/50 border border-slate-800 hover:border-amber-400/50'}`}
                       >
-                          <div className="flex gap-4 items-center font-sans">
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${res.completed ? 'bg-emerald-500/20 text-emerald-500' : 'bg-amber-400/10 text-amber-400'}`}>
-                              {res.completed ? <CheckCircle2 size={20} /> : res.date.split(' ')[0]}
-                            </div>
-                            <div>
-                              <p className={`text-sm font-bold ${res.completed ? 'text-emerald-500' : 'text-white'}`}>
-                                {res.category} {res.completed && '• Finalizado'}
-                              </p>
-                              <p className="text-[10px] text-slate-500 uppercase">
-                                {res.completed ? `Placar: ${res.score}` : `${res.time} • Lançar Placar`}
-                              </p>
-                            </div>
+                        <div className="flex gap-4 items-center font-sans">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${res.completed ? 'bg-emerald-500/20 text-emerald-500' : 'bg-amber-400/10 text-amber-400'}`}>
+                            {res.completed ? <CheckCircle2 size={20} /> : (res.date?.split(' ')[0] || "ST")}
                           </div>
-                          {!res.completed && <Trophy size={16} className="text-slate-700 group-hover:text-amber-400 transition-colors" />}
+                          <div>
+                            <p className={`text-sm font-bold ${res.completed ? 'text-emerald-500' : 'text-white'}`}>
+                              {res.category} {res.completed && '• Finalizado'}
+                            </p>
+                            <p className="text-[10px] text-slate-500 uppercase">
+                              {res.completed ? `Placar: ${res.score || '--'}` : `${res.time || ''} • Lançar Placar`}
+                            </p>
+                          </div>
+                        </div>
+                        {!res.completed && <Trophy size={16} className="text-slate-700 group-hover:text-amber-400 transition-colors" />}
                       </div>
                     ))}
                   </div>
@@ -495,7 +498,7 @@ export default function App() {
 
               {/* SERVIÇOS */}
               <section className="text-left font-sans">
-                <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] mb-6 font-bold">Serviços Concierge</h3>
+                <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] mb-6 font-bold text-slate-100">Serviços Concierge</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-slate-100">
                   <ServiceCard icon={<Calendar size={24} />} title="Quadras" subtitle="Tênis & Padel" onClick={() => { setSelectedService('Quadra'); setBookingStep('category'); }} />
                   <ServiceCard icon={<Sparkles size={24} />} title="Wellness" subtitle="Spa & Fisio" onClick={() => { setSelectedService('Wellness'); setBookingStep('category'); }} />
