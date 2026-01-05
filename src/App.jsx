@@ -415,6 +415,7 @@ export default function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'Home':
+        // 1. TELA PRINCIPAL (MENU)
         if (bookingStep === 'menu') {
           return (
             <div className="space-y-8 animate-in fade-in duration-700 font-sans text-slate-100">
@@ -457,7 +458,7 @@ export default function App() {
                 </div>
               </section>
 
-              {/* AGENDA - AGORA CLICÁVEL PARA PLACAR */}
+              {/* AGENDA - CLICÁVEL PARA PLACAR */}
               {myReservations.length > 0 && (
                 <section className="animate-in slide-in-from-left duration-500 text-left">
                   <div className="flex justify-between items-center mb-4">
@@ -510,18 +511,17 @@ export default function App() {
           );
         }
 
+        // 2. TELA DE PLACAR (POST-MATCH)
         if (bookingStep === 'post_match') {
           return (
             <div className="animate-in fade-in zoom-in-95 duration-500 max-w-md mx-auto text-left font-sans text-slate-100 pb-20">
-              <button onClick={() => setBookingStep('menu')} className="text-slate-500 text-xs flex items-center gap-1 mb-6 font-bold uppercase tracking-widest">
+              <button onClick={() => setBookingStep('menu')} className="text-slate-500 text-[10px] flex items-center gap-1 mb-6 font-black uppercase tracking-widest">
                 <ChevronRight size={14} className="rotate-180"/> Voltar à Agenda
               </button>
-              
               <h3 className="text-3xl font-light italic text-white mb-2 leading-none">Resultado da <br/><span className="text-amber-400">Partida.</span></h3>
               <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black mb-10">{activeReservation?.category} • {activeReservation?.date}</p>
-
+              
               <div className="space-y-8">
-                {/* TIPO DE USO */}
                 <div className="space-y-3">
                   <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest px-1">Qual foi o objetivo?</p>
                   <div className="grid grid-cols-3 gap-2">
@@ -530,8 +530,6 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-
-                {/* RESULTADO (LÓGICA COMPETITIVA) */}
                 {matchResult.type === 'Jogo' && (
                   <div className="space-y-3 animate-in slide-in-from-top-4 duration-500">
                     <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest px-1">Resultado Final</p>
@@ -547,111 +545,92 @@ export default function App() {
                     </div>
                   </div>
                 )}
-
-                {/* CAMPO DE PLACAR */}
                 <div className="space-y-3">
                   <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest px-1">Placar dos Sets</p>
-                  <input 
-                    type="text" 
-                    value={matchResult.score}
-                    onChange={(e) => setMatchResult({...matchResult, score: e.target.value})}
-                    placeholder="Ex: 6/4 6/2"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-3xl py-6 px-6 text-white text-2xl font-mono text-center focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-800 shadow-inner"
-                  />
+                  <input type="text" value={matchResult.score} onChange={(e) => setMatchResult({...matchResult, score: e.target.value})} placeholder="Ex: 6/4 6/2" className="w-full bg-slate-900 border border-slate-800 rounded-3xl py-6 px-6 text-white text-2xl font-mono text-center focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-800 shadow-inner" />
                 </div>
-
-                <button 
-                  onClick={() => {
-                    updateMatchResult(activeReservation.id, matchResult.type, matchResult.result, matchResult.score);
-                    setBookingStep('menu');
-                  }}
-                  className="w-full py-6 bg-white text-black font-black uppercase rounded-3xl text-xs tracking-[0.3em] shadow-2xl active:scale-95 transition-all mt-6"
-                >
-                  Registrar na Performance
-                </button>
+                <button onClick={() => { updateMatchResult(activeReservation.id, matchResult.type, matchResult.result, matchResult.score); setBookingStep('menu'); }} className="w-full py-6 bg-white text-black font-black uppercase rounded-3xl text-xs tracking-[0.3em] shadow-2xl active:scale-95 transition-all mt-6">Registrar na Performance</button>
               </div>
             </div>
           );
         }
 
+        // 3. SELEÇÃO DE DATA E HORA
         if (bookingStep === 'datetime') {
           return (
             <div className="animate-in slide-in-from-right duration-500 space-y-8 max-w-4xl mx-auto text-left font-sans text-slate-100">
               <button onClick={() => setBookingStep('category')} className="text-slate-500 text-sm flex items-center gap-1 font-sans font-bold"><ChevronRight size={16} className="rotate-180"/> Voltar</button>
               <div className="flex justify-between items-end"><div><h3 className="text-2xl font-light italic">Selecione o Período</h3><p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-bold">{selectedCategory}</p></div><div className="text-right"><p className={`text-[10px] font-bold uppercase ${selectedTime && !selectedEndTime ? 'text-amber-400 animate-pulse' : 'text-slate-500'}`}>{!selectedTime ? 'Início' : !selectedEndTime ? 'Fim (Máx 2h)' : 'Confirmado'}</p></div></div>
               
-              {/* DATAS DINÂMICAS GERADAS AUTOMATICAMENTE */}
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide text-slate-100">
                 {Array.from({ length: 7 }).map((_, i) => {
                   const date = new Date();
                   date.setDate(date.getDate() + i);
                   const dayStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
                   const isToday = i === 0;
-                  
                   return (
                     <div 
                       key={dayStr} 
                       onClick={() => setSelectedDate(dayStr)} 
                       className={`min-w-[100px] p-5 rounded-2xl border text-center cursor-pointer transition-all ${selectedDate === dayStr ? 'border-amber-400 bg-amber-400/10' : 'border-slate-800 bg-slate-900'}`}
                     >
-                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1 font-sans">
-                        {isToday ? 'Hoje' : date.getFullYear()}
-                      </p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1 font-sans">{isToday ? 'Hoje' : date.getFullYear()}</p>
                       <p className="font-bold font-sans uppercase">{dayStr}</p>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-amber-400/20 font-sans">
+              <div className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto pr-2 font-sans">
                 {times.map((hora) => {
                   const disabled = isTimeDisabled(hora);
                   const isStart = selectedTime === hora;
                   const isEnd = selectedEndTime === hora;
                   return (
-                    <button key={hora} disabled={disabled} onClick={() => handleTimeClick(hora)} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${isStart || isEnd ? 'bg-amber-400 border-amber-400 text-black shadow-lg shadow-amber-400/10' : disabled ? 'bg-slate-900/40 border-slate-800/50 text-slate-800 opacity-40 cursor-not-allowed' : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-600'}`}>
-                      <div className="flex items-center gap-4 font-sans"><span className="text-xs font-bold font-sans">{hora}</span>{isStart && <span className="text-[9px] uppercase font-black tracking-tighter bg-black text-amber-400 px-2 rounded">Início</span>}{isEnd && <span className="text-[9px] uppercase font-black tracking-tighter bg-black text-amber-400 px-2 rounded">Fim</span>}</div>
+                    <button key={hora} disabled={disabled} onClick={() => handleTimeClick(hora)} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${isStart || isEnd ? 'bg-amber-400 border-amber-400 text-black shadow-lg' : disabled ? 'bg-slate-900/40 border-slate-800/50 text-slate-800 opacity-40 cursor-not-allowed' : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-600'}`}>
+                      <div className="flex items-center gap-4 font-sans"><span className="text-xs font-bold">{hora}</span>{isStart && <span className="text-[9px] uppercase font-black bg-black text-amber-400 px-2 rounded">Início</span>}{isEnd && <span className="text-[9px] uppercase font-black bg-black text-amber-400 px-2 rounded">Fim</span>}</div>
                       <div className={`w-2 h-2 rounded-full ${isStart || isEnd ? 'bg-black' : 'bg-slate-800'}`}></div>
                     </button>
                   );
                 })}
               </div>
-              <button disabled={!selectedTime || !selectedEndTime} onClick={() => setBookingStep(selectedService === 'Quadra' ? 'courts' : 'confirm')} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${selectedTime && selectedEndTime ? 'bg-amber-400 text-black shadow-2xl font-sans' : 'bg-slate-900 text-slate-600 cursor-not-allowed font-sans'}`}>Continuar</button>
+              <button disabled={!selectedTime || !selectedEndTime} onClick={() => setBookingStep(selectedService === 'Quadra' ? 'courts' : 'confirm')} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${selectedTime && selectedEndTime ? 'bg-amber-400 text-black shadow-2xl' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`}>Continuar</button>
             </div>
           );
         }
 
+        // 4. ESCOLHA DE QUADRA
         if (bookingStep === 'courts') {
           const counts = { 'Tênis Estádio (Central)': 1, 'Tênis Saibro Coberta': 2, 'Tênis Saibro Aberta': 2, 'Tênis Rápida Coberta': 2, 'Tênis Rápida Aberta': 1, 'Padel': 4, 'Squash': 3, 'Pickleball': 3 };
           return (
             <div className="animate-in zoom-in-95 duration-500 space-y-8 text-left pb-24 text-slate-100 font-sans">
               <button onClick={() => setBookingStep('datetime')} className="text-slate-500 text-sm flex items-center gap-1 font-sans font-bold"><ChevronRight size={16} className="rotate-180"/> Voltar</button>
-              <div className="flex justify-between items-end font-sans"><h3 className="text-2xl font-light italic text-white font-sans">Escolha sua Quadra</h3><span className="text-[9px] bg-amber-400 text-black px-3 py-1 rounded-full font-bold uppercase tracking-widest font-sans">{selectedCategory}</span></div>
+              <div className="flex justify-between items-end font-sans"><h3 className="text-2xl font-light italic text-white font-sans">Escolha sua Quadra</h3><span className="text-[9px] bg-amber-400 text-black px-3 py-1 rounded-full font-bold uppercase tracking-widest">{selectedCategory}</span></div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 font-sans">
                 {Array.from({ length: counts[selectedCategory] || 1 }).map((_, i) => (
-                  <div key={i} onClick={() => { setSelectedItem(i+1); setBookingStep('confirm'); }} className="flex flex-col items-center gap-2 group cursor-pointer font-sans"><span className="text-[10px] text-slate-500 font-bold uppercase font-sans">Unidade {i+1}</span><div className="w-full h-32 rounded-2xl border-2 border-emerald-500/30 bg-emerald-900/10 hover:border-amber-400 transition-all flex items-center justify-center text-[8px] font-black text-emerald-500 uppercase tracking-widest">Livre</div></div>
+                  <div key={i} onClick={() => { setSelectedItem(i+1); setBookingStep('confirm'); }} className="flex flex-col items-center gap-2 group cursor-pointer font-sans">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase">Unidade {i+1}</span>
+                    <div className="w-full h-32 rounded-2xl border-2 border-emerald-500/30 bg-emerald-900/10 hover:border-amber-400 transition-all flex items-center justify-center text-[8px] font-black text-emerald-500 uppercase tracking-widest">Livre</div>
+                  </div>
                 ))}
               </div>
             </div>
           );
         }
 
+        // 5. CONFIRMAÇÃO FINAL
         if (bookingStep === 'confirm') {
           return (
             <div className="animate-in fade-in duration-500 max-w-md mx-auto text-left font-sans text-slate-100">
               <h3 className="text-2xl font-light mb-6 italic text-center text-white">Detalhes da Reserva</h3>
-              
-              {/* CARD DE RESUMO DOS DADOS */}
               <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-6 shadow-2xl mb-6">
-                <div className="flex justify-between border-b border-white/5 pb-3 font-sans">
+                <div className="flex justify-between border-b border-white/5 pb-3">
                   <span className="text-[10px] text-slate-500 uppercase font-bold">Serviço</span>
                   <span className="text-amber-400 font-bold text-sm">{selectedCategory}</span>
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-3 font-sans">
                   <span className="text-[10px] text-slate-500 uppercase font-bold">Data e Hora</span>
-                  <span className="text-slate-100 font-medium text-sm">
-                    {selectedDate} • {selectedTime} {selectedEndTime ? `até ${selectedEndTime}` : ''}
-                  </span>
+                  <span className="text-slate-100 font-medium text-sm">{selectedDate} • {selectedTime} {selectedEndTime ? `até ${selectedEndTime}` : ''}</span>
                 </div>
                 {selectedItem && (
                   <div className="flex justify-between border-b border-white/5 pb-3 font-sans">
@@ -661,193 +640,61 @@ export default function App() {
                 )}
               </div>
 
-              {/* SEÇÃO DE PARCEIROS / CONVIDADOS */}
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between items-center px-2">
-                  <h4 className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">
-                    Jogadores ({partners.length + 1}/4)
-                  </h4>
-                  <span className="text-[10px] text-slate-700 font-bold uppercase tracking-widest italic">
-                    Obrigatório para Padel
-                  </span>
+                  <h4 className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">Jogadores ({partners.length + 1}/4)</h4>
                 </div>
-                
                 <div className="grid grid-cols-1 gap-2 font-sans">
-                  {/* CARD DO SÓCIO PRINCIPAL */}
                   <div className="flex items-center gap-3 p-3 bg-amber-400/5 border border-amber-400/20 rounded-2xl">
-                    <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-black font-bold text-xs shadow-lg">
-                      FF
-                    </div>
-                    <span className="text-sm font-bold text-white italic">Fernando Fontolan (Você)</span>
+                    <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-black font-bold text-xs shadow-lg">FF</div>
+                    <span className="text-sm font-bold text-white italic">{Name} {surName} (Você)</span>
                   </div>
-
-                  {/* LISTA DE PARCEIROS ADICIONADOS */}
                   {partners.map((p, idx) => (
-                    <div 
-                      key={idx} 
-                      className="flex items-center justify-between gap-3 p-3 bg-slate-900 border border-slate-800 rounded-2xl animate-in slide-in-from-right duration-300"
-                    >
+                    <div key={idx} className="flex items-center justify-between gap-3 p-3 bg-slate-900 border border-slate-800 rounded-2xl animate-in slide-in-from-right duration-300">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-xs border border-white/5 uppercase">
-                          {p.charAt(0)}
-                        </div>
+                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-xs uppercase">{p.charAt(0)}</div>
                         <span className="text-sm text-slate-200">{p}</span>
                       </div>
-                      <button 
-                        onClick={() => setPartners(partners.filter((_, i) => i !== idx))} 
-                        className="text-red-500/30 hover:text-red-500 transition-colors p-1"
-                      >
-                        <X size={16} />
-                      </button>
+                      <button onClick={() => setPartners(partners.filter((_, i) => i !== idx))} className="text-red-500/30 hover:text-red-500 transition-colors p-1"><X size={16} /></button>
                     </div>
                   ))}
-
-                  {/* CAMPO DE ENTRADA PARA NOVOS CONVIDADOS */}
                   {partners.length < 3 && (
                     <div className="relative mt-2">
-                      <input 
-                        type="text" 
-                        value={guestName}
-                        onChange={(e) => setGuestName(e.target.value)}
-                        placeholder="Nome do parceiro..."
-                        className="w-full bg-black border border-slate-800 rounded-2xl py-4 pl-4 pr-12 text-sm text-white focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-700"
-                        onKeyPress={(e) => {
-                          if(e.key === 'Enter' && guestName.trim()) {
-                            setPartners([...partners, guestName.trim()]);
-                            setGuestName("");
-                          }
-                        }}
-                      />
-                      <button 
-                        onClick={() => {
-                          if(guestName.trim()) {
-                            setPartners([...partners, guestName.trim()]);
-                            setGuestName("");
-                          }
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center text-black active:scale-90 transition-transform shadow-lg"
-                      >
-                        <ChevronRight size={20} />
-                      </button>
+                      <input type="text" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Nome do parceiro..." className="w-full bg-black border border-slate-800 rounded-2xl py-4 pl-4 pr-12 text-sm text-white focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-700" onKeyPress={(e) => { if(e.key === 'Enter' && guestName.trim()) { setPartners([...partners, guestName.trim()]); setGuestName(""); }}} />
+                      <button onClick={() => { if(guestName.trim()) { setPartners([...partners, guestName.trim()]); setGuestName(""); }}} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center text-black active:scale-90 shadow-lg"><ChevronRight size={20} /></button>
                     </div>
                   )}
                 </div>
               </div>
-
-              {/* BOTÃO FINALIZAR */}
-              <button 
-                onClick={handleConfirmBooking} 
-                className="w-full py-5 bg-amber-400 text-black font-black uppercase rounded-2xl text-xs tracking-widest active:scale-95 shadow-2xl transition-all font-sans"
-              >
-                Finalizar Solicitação
-              </button>
+              <button onClick={handleConfirmBooking} className="w-full py-5 bg-amber-400 text-black font-black uppercase rounded-2xl text-xs tracking-widest active:scale-95 shadow-2xl transition-all font-sans">Finalizar Solicitação</button>
             </div>
           );
         }
 
-        if (bookingStep === 'post_match') {
-          return (
-            <div className="animate-in fade-in zoom-in-95 duration-500 max-w-md mx-auto text-left font-sans text-slate-100 pb-20">
-              <button onClick={() => setBookingStep('menu')} className="text-slate-500 text-sm flex items-center gap-1 mb-6 font-bold uppercase tracking-widest">
-                <ChevronRight size={16} className="rotate-180"/> Cancelar
-              </button>
-              
-              <h3 className="text-2xl font-light italic text-white mb-2">Finalizar Partida</h3>
-              <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mb-8">Reserva: {activeReservation?.category} - {activeReservation?.date}</p>
-
-              <div className="space-y-8">
-                {/* TIPO DE USO */}
-                <section className="space-y-3">
-                  <p className="text-[10px] text-amber-400 uppercase font-black tracking-widest">Tipo de Atividade</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['Jogo', 'Treino', 'Rápido'].map(t => (
-                      <button 
-                        key={t}
-                        onClick={() => setMatchResult({...matchResult, type: t})}
-                        className={`py-3 rounded-xl border text-[10px] font-black uppercase transition-all ${matchResult.type === t ? 'bg-amber-400 border-amber-400 text-black' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-
-                {/* RESULTADO (Só aparece se for 'Jogo') */}
-                {matchResult.type === 'Jogo' && (
-                  <section className="space-y-3 animate-in slide-in-from-left duration-300">
-                    <p className="text-[10px] text-amber-400 uppercase font-black tracking-widest">Resultado</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button 
-                        onClick={() => setMatchResult({...matchResult, result: 'Vitória'})}
-                        className={`py-4 rounded-2xl border flex items-center justify-center gap-2 font-bold ${matchResult.result === 'Vitória' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500' : 'bg-slate-900 border-slate-800 text-slate-600'}`}
-                      >
-                        <Trophy size={16} /> Vitória
-                      </button>
-                      <button 
-                        onClick={() => setMatchResult({...matchResult, result: 'Derrota'})}
-                        className={`py-4 rounded-2xl border flex items-center justify-center gap-2 font-bold ${matchResult.result === 'Derrota' ? 'bg-red-500/20 border-red-500 text-red-500' : 'bg-slate-900 border-slate-800 text-slate-600'}`}
-                      >
-                        <X size={16} /> Derrota
-                      </button>
-                    </div>
-                  </section>
-                )}
-
-                {/* PLACAR */}
-                <section className="space-y-3">
-                  <p className="text-[10px] text-amber-400 uppercase font-black tracking-widest">Placar Final (Ex: 6/4 6/2)</p>
-                  <input 
-                    type="text" 
-                    value={matchResult.score}
-                    onChange={(e) => setMatchResult({...matchResult, score: e.target.value})}
-                    placeholder="0/0 0/0"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-5 px-6 text-white text-xl font-mono focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-800"
-                  />
-                </section>
-
-                <button 
-                  onClick={() => updateMatchResult(activeReservation.id, matchResult.type, matchResult.result, matchResult.score)}
-                  className="w-full py-5 bg-white text-black font-black uppercase rounded-2xl text-xs tracking-[0.2em] shadow-2xl active:scale-95 transition-all mt-4"
-                >
-                  Confirmar e Salvar
-                </button>
-              </div>
-            </div>
-          );
-        }
-
+        // 6. LISTAGEM DE TODAS AS RESERVAS
         if (bookingStep === 'view_reservations') {
           return (
             <div className="animate-in slide-in-from-right duration-500 text-left space-y-6 max-w-2xl mx-auto font-sans text-slate-100">
-              <button onClick={() => setBookingStep('menu')} className="text-slate-500 flex items-center gap-1 text-sm font-sans font-bold">
-                <ChevronRight size={16} className="rotate-180"/> Voltar
-              </button>
-              <h3 className="text-2xl font-light italic text-white font-sans">Seus Agendamentos</h3>
+              <button onClick={() => setBookingStep('menu')} className="text-slate-500 flex items-center gap-1 text-sm font-sans font-bold"><ChevronRight size={16} className="rotate-180"/> Voltar</button>
+              <h3 className="text-2xl font-light italic text-white">Seus Agendamentos</h3>
               <div className="space-y-4">
                 {myReservations.map(res => (
                   <div key={res.id} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex justify-between items-center group font-sans text-slate-100">
-                    <div className="flex items-center gap-4 font-sans">
-                      <div className="p-3 bg-amber-400/10 rounded-full text-amber-400 font-bold text-xs">
-                        {res.date.split(' ')[0]}
-                      </div>
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-amber-400/10 rounded-full text-amber-400 font-bold text-xs">{res.date?.split(' ')[0] || "ST"}</div>
                       <div>
                         <p className="font-bold">{res.category}</p>
                         <p className="text-[10px] text-slate-500 uppercase font-bold">{res.date} • {res.time}</p>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => handleCancelBooking(res.id)} 
-                      className="text-[10px] font-bold text-red-500/40 uppercase hover:text-red-500 transition-colors font-sans"
-                    >
-                      Cancelar
-                    </button>
+                    <button onClick={() => handleCancelBooking(res.id)} className="text-[10px] font-bold text-red-500/40 uppercase hover:text-red-500 transition-colors font-sans">Cancelar</button>
                   </div>
                 ))}
               </div>
             </div>
           );
         }
-        return null;
+        return null; // Caso nenhum step seja encontrado
 
       case 'tournaments':
         if (tourneyViewMode === 'bracket') {
