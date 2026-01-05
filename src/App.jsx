@@ -416,10 +416,8 @@ export default function App() {
     console.log("Passo de Reserva:", bookingStep); // Isso também
     switch (activeTab) {
       case 'Home':
-        console.log("Entrou no case Home");
-        // 1. TELA PRINCIPAL (MENU)
+        // PASSO 1: MENU PRINCIPAL
         if (bookingStep === 'menu') {
-          console.log("Entrou no menu");
           return (
             <div className="space-y-8 animate-in fade-in duration-700 font-sans text-slate-100">
               {/* IA INSIGHT */}
@@ -437,37 +435,26 @@ export default function App() {
               <section className="animate-in slide-in-from-right duration-500 delay-200">
                 <div className="flex items-center justify-between mb-4 px-1">
                   <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] font-bold">Avisos do Clube</h3>
-                  <div className="flex gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
-                    <div className="w-1.5 h-1.5 rounded-full bg-slate-800"></div>
-                  </div>
                 </div>
-                
                 <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                   {[
-                    { title: "Manutenção de Quadras", text: "Saibro 1 e 2 estarão em manutenção hoje das 12h às 13h.", tag: "Infra" },
-                    { title: "Menu de Verão", text: "Novos drinks refrescantes disponíveis no deck do Bistrô.", tag: "Bistrô" },
-                    { title: "Inscrições Abertas", text: "Últimas vagas para a Copa Salto de Verão. Garanta já!", tag: "Torneios" }
+                    { title: "Manutenção de Quadras", text: "Saibro 1 e 2 estarão em manutenção hoje.", tag: "Infra" },
+                    { title: "Menu de Verão", text: "Novos drinks refrescantes no deck do Bistrô.", tag: "Bistrô" },
+                    { title: "Inscrições Abertas", text: "Últimas vagas para a Copa Salto de Verão.", tag: "Torneios" }
                   ].map((aviso, idx) => (
                     <div key={idx} className="min-w-[280px] bg-slate-900/40 border border-slate-800 p-5 rounded-3xl space-y-2">
-                      <div className="flex justify-between items-start">
-                        <span className="text-[8px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-black uppercase tracking-widest">{aviso.tag}</span>
-                        <ChevronRight size={14} className="text-slate-700" />
-                      </div>
+                      <span className="text-[8px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-black uppercase">{aviso.tag}</span>
                       <p className="text-sm font-bold text-slate-200">{aviso.title}</p>
-                      <p className="text-xs text-slate-500 leading-relaxed">{aviso.text}</p>
+                      <p className="text-xs text-slate-500">{aviso.text}</p>
                     </div>
                   ))}
                 </div>
               </section>
 
-              {/* AGENDA - CLICÁVEL PARA PLACAR */}
+              {/* AGENDA CLICÁVEL */}
               {myReservations.length > 0 && (
-                <section className="animate-in slide-in-from-left duration-500 text-left">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] font-bold text-slate-100">Sua Agenda</h3>
-                    <button onClick={() => setBookingStep('view_reservations')} className="text-amber-400 text-[10px] font-bold uppercase underline">Ver Todos</button>
-                  </div>
+                <section className="text-left">
+                  <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] font-bold mb-4">Sua Agenda</h3>
                   <div className="space-y-3">
                     {myReservations.slice(0, 1).map(res => (
                       <div 
@@ -478,32 +465,28 @@ export default function App() {
                             setBookingStep('post_match');
                           }
                         }}
-                        className={`p-5 rounded-2xl flex justify-between items-center transition-all group cursor-pointer ${res.completed ? 'bg-emerald-500/5 border border-emerald-500/20' : 'bg-slate-900/50 border border-slate-800 hover:border-amber-400/50'}`}
+                        className={`p-5 rounded-2xl flex justify-between items-center transition-all cursor-pointer ${res.completed ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-slate-900/50 border-slate-800 hover:border-amber-400/50'}`}
                       >
-                        <div className="flex gap-4 items-center font-sans">
+                        <div className="flex gap-4 items-center">
                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${res.completed ? 'bg-emerald-500/20 text-emerald-500' : 'bg-amber-400/10 text-amber-400'}`}>
                             {res.completed ? <CheckCircle2 size={20} /> : (res.date?.split(' ')[0] || "ST")}
                           </div>
                           <div>
-                            <p className={`text-sm font-bold ${res.completed ? 'text-emerald-500' : 'text-white'}`}>
-                              {res.category} {res.completed && '• Finalizado'}
-                            </p>
-                            <p className="text-[10px] text-slate-500 uppercase">
-                              {res.completed ? `Placar: ${res.score || '--'}` : `${res.time || ''} • Lançar Placar`}
-                            </p>
+                            <p className="text-sm font-bold">{res.category}</p>
+                            <p className="text-[10px] text-slate-500 uppercase">{res.time} • {res.completed ? 'Finalizado' : 'Lançar Placar'}</p>
                           </div>
                         </div>
-                        {!res.completed && <Trophy size={16} className="text-slate-700 group-hover:text-amber-400 transition-colors" />}
+                        <Trophy size={16} className={res.completed ? "text-emerald-500" : "text-slate-700"} />
                       </div>
                     ))}
                   </div>
                 </section>
               )}
 
-              {/* SERVIÇOS */}
-              <section className="text-left font-sans">
-                <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] mb-6 font-bold text-slate-100">Serviços Concierge</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-slate-100">
+              {/* SERVIÇOS CONCIERGE */}
+              <section className="text-left">
+                <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] mb-6 font-bold">Serviços Concierge</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-slate-100">
                   <ServiceCard icon={<Calendar size={24} />} title="Quadras" subtitle="Tênis & Padel" onClick={() => { setSelectedService('Quadra'); setBookingStep('category'); }} />
                   <ServiceCard icon={<Sparkles size={24} />} title="Wellness" subtitle="Spa & Fisio" onClick={() => { setSelectedService('Wellness'); setBookingStep('category'); }} />
                   <ServiceCard icon={<Coffee size={24} />} title="Gastronomia" subtitle="Bistrô & Café" onClick={() => { setSelectedService('Gastronomia'); setBookingStep('category'); }} />
@@ -513,26 +496,39 @@ export default function App() {
             </div>
           );
         }
-        // Se chegar aqui e a tela estiver preta, o erro está aqui embaixo!
-        console.log("Não caiu em nenhum IF dentro de Home"); 
-        return <div>Erro: Passo {bookingStep} não encontrado</div>;
 
-        // 2. TELA DE PLACAR (POST-MATCH)
+        // PASSO 2: CATEGORIAS (O que estava quebrando)
+        if (bookingStep === 'category') {
+          const categories = { 'Quadra': ['Tênis Estádio (Central)', 'Tênis Saibro Coberta', 'Tênis Saibro Aberta', 'Tênis Rápida Coberta', 'Tênis Rápida Aberta', 'Padel', 'Squash', 'Pickleball'], 'Wellness': ['Fisioterapia', 'Massagem', 'Recovery'], 'Gastronomia': ['Mesa Salão', 'Mesa Deck'], 'Equipamentos': ['Encordoamento', 'Troca de Grip'] };
+          return (
+            <div className="animate-in slide-in-from-right duration-500 space-y-6 max-w-2xl mx-auto text-left font-sans">
+              <button onClick={() => setBookingStep('menu')} className="text-slate-500 flex items-center gap-1 text-sm font-bold"><ChevronRight size={16} className="rotate-180"/> Voltar</button>
+              <h3 className="text-2xl font-light italic text-white">Selecione o serviço</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {categories[selectedService]?.map(cat => (
+                  <button key={cat} onClick={() => { setSelectedCategory(cat); setBookingStep('datetime'); }} className="p-6 bg-slate-900 border border-slate-800 rounded-2xl text-left flex justify-between items-center hover:border-amber-500/50 group transition-all">
+                    <span className="font-medium text-sm text-white">{cat}</span>
+                    <ChevronRight size={18} className="text-amber-400 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        }
+
+        // PASSO 3: LANÇAMENTO DE PLACAR
         if (bookingStep === 'post_match') {
           return (
             <div className="animate-in fade-in zoom-in-95 duration-500 max-w-md mx-auto text-left font-sans text-slate-100 pb-20">
-              <button onClick={() => setBookingStep('menu')} className="text-slate-500 text-[10px] flex items-center gap-1 mb-6 font-black uppercase tracking-widest">
-                <ChevronRight size={14} className="rotate-180"/> Voltar à Agenda
-              </button>
+              <button onClick={() => setBookingStep('menu')} className="text-slate-500 text-[10px] flex items-center gap-1 mb-6 font-black uppercase tracking-widest"><ChevronRight size={14} className="rotate-180"/> Cancelar</button>
               <h3 className="text-3xl font-light italic text-white mb-2 leading-none">Resultado da <br/><span className="text-amber-400">Partida.</span></h3>
               <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black mb-10">{activeReservation?.category} • {activeReservation?.date}</p>
-              
               <div className="space-y-8">
                 <div className="space-y-3">
                   <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest px-1">Qual foi o objetivo?</p>
                   <div className="grid grid-cols-3 gap-2">
                     {['Jogo', 'Treino', 'Rápido'].map(t => (
-                      <button key={t} onClick={() => setMatchResult({...matchResult, type: t})} className={`py-4 rounded-2xl border text-[10px] font-black uppercase transition-all ${matchResult.type === t ? 'bg-amber-400 border-amber-400 text-black shadow-lg shadow-amber-400/20' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>{t}</button>
+                      <button key={t} onClick={() => setMatchResult({...matchResult, type: t})} className={`py-4 rounded-2xl border text-[10px] font-black uppercase transition-all ${matchResult.type === t ? 'bg-amber-400 border-amber-400 text-black shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>{t}</button>
                     ))}
                   </div>
                 </div>
@@ -540,167 +536,23 @@ export default function App() {
                   <div className="space-y-3 animate-in slide-in-from-top-4 duration-500">
                     <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest px-1">Resultado Final</p>
                     <div className="grid grid-cols-2 gap-2">
-                      <button onClick={() => setMatchResult({...matchResult, result: 'Vitória'})} className={`py-5 rounded-3xl border flex flex-col items-center gap-2 transition-all ${matchResult.result === 'Vitória' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' : 'bg-slate-900 border-slate-800 text-slate-600'}`}>
-                        <Trophy size={20} />
-                        <span className="text-[10px] font-black uppercase">Vitória</span>
-                      </button>
-                      <button onClick={() => setMatchResult({...matchResult, result: 'Derrota'})} className={`py-5 rounded-3xl border flex flex-col items-center gap-2 transition-all ${matchResult.result === 'Derrota' ? 'bg-red-500/10 border-red-500 text-red-500' : 'bg-slate-900 border-slate-800 text-slate-600'}`}>
-                        <X size={20} />
-                        <span className="text-[10px] font-black uppercase">Derrota</span>
-                      </button>
+                      <button onClick={() => setMatchResult({...matchResult, result: 'Vitória'})} className={`py-5 rounded-3xl border flex flex-col items-center gap-2 transition-all ${matchResult.result === 'Vitória' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' : 'bg-slate-900 border-slate-800 text-slate-600'}`}><Trophy size={20} /><span className="text-[10px] font-black uppercase">Vitória</span></button>
+                      <button onClick={() => setMatchResult({...matchResult, result: 'Derrota'})} className={`py-5 rounded-3xl border flex flex-col items-center gap-2 transition-all ${matchResult.result === 'Derrota' ? 'bg-red-500/10 border-red-500 text-red-500' : 'bg-slate-900 border-slate-800 text-slate-600'}`}><X size={20} /><span className="text-[10px] font-black uppercase">Derrota</span></button>
                     </div>
                   </div>
                 )}
                 <div className="space-y-3">
-                  <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest px-1">Placar dos Sets</p>
-                  <input type="text" value={matchResult.score} onChange={(e) => setMatchResult({...matchResult, score: e.target.value})} placeholder="Ex: 6/4 6/2" className="w-full bg-slate-900 border border-slate-800 rounded-3xl py-6 px-6 text-white text-2xl font-mono text-center focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-800 shadow-inner" />
+                  <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest px-1">Placar Final</p>
+                  <input type="text" value={matchResult.score} onChange={(e) => setMatchResult({...matchResult, score: e.target.value})} placeholder="Ex: 6/4 6/2" className="w-full bg-slate-900 border border-slate-800 rounded-3xl py-6 px-6 text-white text-2xl font-mono text-center focus:outline-none focus:border-amber-500 shadow-inner" />
                 </div>
-                <button onClick={() => { updateMatchResult(activeReservation.id, matchResult.type, matchResult.result, matchResult.score); setBookingStep('menu'); }} className="w-full py-6 bg-white text-black font-black uppercase rounded-3xl text-xs tracking-[0.3em] shadow-2xl active:scale-95 transition-all mt-6">Registrar na Performance</button>
+                <button onClick={() => { updateMatchResult(activeReservation.id, matchResult.type, matchResult.result, matchResult.score); setBookingStep('menu'); }} className="w-full py-6 bg-white text-black font-black uppercase rounded-3xl text-xs tracking-[0.3em] shadow-2xl active:scale-95 mt-6">Registrar na Performance</button>
               </div>
             </div>
           );
         }
 
-        // 3. SELEÇÃO DE DATA E HORA
-        if (bookingStep === 'datetime') {
-          return (
-            <div className="animate-in slide-in-from-right duration-500 space-y-8 max-w-4xl mx-auto text-left font-sans text-slate-100">
-              <button onClick={() => setBookingStep('category')} className="text-slate-500 text-sm flex items-center gap-1 font-sans font-bold"><ChevronRight size={16} className="rotate-180"/> Voltar</button>
-              <div className="flex justify-between items-end"><div><h3 className="text-2xl font-light italic">Selecione o Período</h3><p className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-bold">{selectedCategory}</p></div><div className="text-right"><p className={`text-[10px] font-bold uppercase ${selectedTime && !selectedEndTime ? 'text-amber-400 animate-pulse' : 'text-slate-500'}`}>{!selectedTime ? 'Início' : !selectedEndTime ? 'Fim (Máx 2h)' : 'Confirmado'}</p></div></div>
-              
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide text-slate-100">
-                {Array.from({ length: 7 }).map((_, i) => {
-                  const date = new Date();
-                  date.setDate(date.getDate() + i);
-                  const dayStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
-                  const isToday = i === 0;
-                  return (
-                    <div 
-                      key={dayStr} 
-                      onClick={() => setSelectedDate(dayStr)} 
-                      className={`min-w-[100px] p-5 rounded-2xl border text-center cursor-pointer transition-all ${selectedDate === dayStr ? 'border-amber-400 bg-amber-400/10' : 'border-slate-800 bg-slate-900'}`}
-                    >
-                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1 font-sans">{isToday ? 'Hoje' : date.getFullYear()}</p>
-                      <p className="font-bold font-sans uppercase">{dayStr}</p>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto pr-2 font-sans">
-                {times.map((hora) => {
-                  const disabled = isTimeDisabled(hora);
-                  const isStart = selectedTime === hora;
-                  const isEnd = selectedEndTime === hora;
-                  return (
-                    <button key={hora} disabled={disabled} onClick={() => handleTimeClick(hora)} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${isStart || isEnd ? 'bg-amber-400 border-amber-400 text-black shadow-lg' : disabled ? 'bg-slate-900/40 border-slate-800/50 text-slate-800 opacity-40 cursor-not-allowed' : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-600'}`}>
-                      <div className="flex items-center gap-4 font-sans"><span className="text-xs font-bold">{hora}</span>{isStart && <span className="text-[9px] uppercase font-black bg-black text-amber-400 px-2 rounded">Início</span>}{isEnd && <span className="text-[9px] uppercase font-black bg-black text-amber-400 px-2 rounded">Fim</span>}</div>
-                      <div className={`w-2 h-2 rounded-full ${isStart || isEnd ? 'bg-black' : 'bg-slate-800'}`}></div>
-                    </button>
-                  );
-                })}
-              </div>
-              <button disabled={!selectedTime || !selectedEndTime} onClick={() => setBookingStep(selectedService === 'Quadra' ? 'courts' : 'confirm')} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${selectedTime && selectedEndTime ? 'bg-amber-400 text-black shadow-2xl' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`}>Continuar</button>
-            </div>
-          );
-        }
-
-        // 4. ESCOLHA DE QUADRA
-        if (bookingStep === 'courts') {
-          const counts = { 'Tênis Estádio (Central)': 1, 'Tênis Saibro Coberta': 2, 'Tênis Saibro Aberta': 2, 'Tênis Rápida Coberta': 2, 'Tênis Rápida Aberta': 1, 'Padel': 4, 'Squash': 3, 'Pickleball': 3 };
-          return (
-            <div className="animate-in zoom-in-95 duration-500 space-y-8 text-left pb-24 text-slate-100 font-sans">
-              <button onClick={() => setBookingStep('datetime')} className="text-slate-500 text-sm flex items-center gap-1 font-sans font-bold"><ChevronRight size={16} className="rotate-180"/> Voltar</button>
-              <div className="flex justify-between items-end font-sans"><h3 className="text-2xl font-light italic text-white font-sans">Escolha sua Quadra</h3><span className="text-[9px] bg-amber-400 text-black px-3 py-1 rounded-full font-bold uppercase tracking-widest">{selectedCategory}</span></div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 font-sans">
-                {Array.from({ length: counts[selectedCategory] || 1 }).map((_, i) => (
-                  <div key={i} onClick={() => { setSelectedItem(i+1); setBookingStep('confirm'); }} className="flex flex-col items-center gap-2 group cursor-pointer font-sans">
-                    <span className="text-[10px] text-slate-500 font-bold uppercase">Unidade {i+1}</span>
-                    <div className="w-full h-32 rounded-2xl border-2 border-emerald-500/30 bg-emerald-900/10 hover:border-amber-400 transition-all flex items-center justify-center text-[8px] font-black text-emerald-500 uppercase tracking-widest">Livre</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        }
-
-        // 5. CONFIRMAÇÃO FINAL
-        if (bookingStep === 'confirm') {
-          return (
-            <div className="animate-in fade-in duration-500 max-w-md mx-auto text-left font-sans text-slate-100">
-              <h3 className="text-2xl font-light mb-6 italic text-center text-white">Detalhes da Reserva</h3>
-              <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-6 shadow-2xl mb-6">
-                <div className="flex justify-between border-b border-white/5 pb-3">
-                  <span className="text-[10px] text-slate-500 uppercase font-bold">Serviço</span>
-                  <span className="text-amber-400 font-bold text-sm">{selectedCategory}</span>
-                </div>
-                <div className="flex justify-between border-b border-white/5 pb-3 font-sans">
-                  <span className="text-[10px] text-slate-500 uppercase font-bold">Data e Hora</span>
-                  <span className="text-slate-100 font-medium text-sm">{selectedDate} • {selectedTime} {selectedEndTime ? `até ${selectedEndTime}` : ''}</span>
-                </div>
-                {selectedItem && (
-                  <div className="flex justify-between border-b border-white/5 pb-3 font-sans">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold">Local</span>
-                    <span className="text-slate-100 font-medium text-sm">Unidade #{selectedItem}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4 mb-8">
-                <div className="flex justify-between items-center px-2">
-                  <h4 className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em]">Jogadores ({partners.length + 1}/4)</h4>
-                </div>
-                <div className="grid grid-cols-1 gap-2 font-sans">
-                  <div className="flex items-center gap-3 p-3 bg-amber-400/5 border border-amber-400/20 rounded-2xl">
-                    <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-black font-bold text-xs shadow-lg">FF</div>
-                    <span className="text-sm font-bold text-white italic">{Name} {surName} (Você)</span>
-                  </div>
-                  {partners.map((p, idx) => (
-                    <div key={idx} className="flex items-center justify-between gap-3 p-3 bg-slate-900 border border-slate-800 rounded-2xl animate-in slide-in-from-right duration-300">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-xs uppercase">{p.charAt(0)}</div>
-                        <span className="text-sm text-slate-200">{p}</span>
-                      </div>
-                      <button onClick={() => setPartners(partners.filter((_, i) => i !== idx))} className="text-red-500/30 hover:text-red-500 transition-colors p-1"><X size={16} /></button>
-                    </div>
-                  ))}
-                  {partners.length < 3 && (
-                    <div className="relative mt-2">
-                      <input type="text" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Nome do parceiro..." className="w-full bg-black border border-slate-800 rounded-2xl py-4 pl-4 pr-12 text-sm text-white focus:outline-none focus:border-amber-500 transition-all placeholder:text-slate-700" onKeyPress={(e) => { if(e.key === 'Enter' && guestName.trim()) { setPartners([...partners, guestName.trim()]); setGuestName(""); }}} />
-                      <button onClick={() => { if(guestName.trim()) { setPartners([...partners, guestName.trim()]); setGuestName(""); }}} className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center text-black active:scale-90 shadow-lg"><ChevronRight size={20} /></button>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <button onClick={handleConfirmBooking} className="w-full py-5 bg-amber-400 text-black font-black uppercase rounded-2xl text-xs tracking-widest active:scale-95 shadow-2xl transition-all font-sans">Finalizar Solicitação</button>
-            </div>
-          );
-        }
-
-        // 6. LISTAGEM DE TODAS AS RESERVAS
-        if (bookingStep === 'view_reservations') {
-          return (
-            <div className="animate-in slide-in-from-right duration-500 text-left space-y-6 max-w-2xl mx-auto font-sans text-slate-100">
-              <button onClick={() => setBookingStep('menu')} className="text-slate-500 flex items-center gap-1 text-sm font-sans font-bold"><ChevronRight size={16} className="rotate-180"/> Voltar</button>
-              <h3 className="text-2xl font-light italic text-white">Seus Agendamentos</h3>
-              <div className="space-y-4">
-                {myReservations.map(res => (
-                  <div key={res.id} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex justify-between items-center group font-sans text-slate-100">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-amber-400/10 rounded-full text-amber-400 font-bold text-xs">{res.date?.split(' ')[0] || "ST"}</div>
-                      <div>
-                        <p className="font-bold">{res.category}</p>
-                        <p className="text-[10px] text-slate-500 uppercase font-bold">{res.date} • {res.time}</p>
-                      </div>
-                    </div>
-                    <button onClick={() => handleCancelBooking(res.id)} className="text-[10px] font-bold text-red-500/40 uppercase hover:text-red-500 transition-colors font-sans">Cancelar</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        }
-        return null; // Caso nenhum step seja encontrado
+        // FINALIZAÇÃO DE SEGURANÇA
+        return null;
 
       case 'tournaments':
         if (tourneyViewMode === 'bracket') {
