@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Users, Activity, Calendar, Coffee, Sparkles, ChevronRight, 
-  Trophy, CheckCircle2, X, Clock, MapPin, Hammer, User, TrendingUp, Star, 
-  Mail, Lock, ShieldCheck, GraduationCap, Calendar, Sparkles, Coffee, Hammer,
-  ChevronRight, Clock, Star, Trophy, X, CheckCircle2, Mail, Activity, TrendingUp, Users } from 'lucide-react';
+import { Bell, Users, Activity, Calendar, Coffee, Sparkles,
+  ChevronRight, Trophy, CheckCircle2, X, Clock, MapPin, Hammer,
+  User, TrendingUp, Star, Mail, Lock, ShieldCheck, GraduationCap} from 'lucide-react';
 import Logo from '/Logo.svg';
 import { supabase } from './supabaseClient'; 
 
