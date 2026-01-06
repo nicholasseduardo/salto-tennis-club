@@ -434,58 +434,86 @@ export default function App() {
               {/* CLUB BULLETIN */}
               <section className="animate-in slide-in-from-right duration-500 delay-200">
                 <div className="flex items-center justify-between mb-4 px-1">
-                  <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] font-bold">Avisos do Clube</h3>
+                  <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] font-bold text-slate-100">Avisos do Clube</h3>
                 </div>
-                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide text-slate-100">
                   {[
                     { title: "Manutenção de Quadras", text: "Saibro 1 e 2 estarão em manutenção hoje.", tag: "Infra" },
                     { title: "Menu de Verão", text: "Novos drinks refrescantes no deck do Bistrô.", tag: "Bistrô" },
                     { title: "Inscrições Abertas", text: "Últimas vagas para a Copa Salto de Verão.", tag: "Torneios" }
                   ].map((aviso, idx) => (
                     <div key={idx} className="min-w-[280px] bg-slate-900/40 border border-slate-800 p-5 rounded-3xl space-y-2">
-                      <span className="text-[8px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-black uppercase">{aviso.tag}</span>
+                      <span className="text-[8px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-black uppercase tracking-widest">{aviso.tag}</span>
                       <p className="text-sm font-bold text-slate-200">{aviso.title}</p>
-                      <p className="text-xs text-slate-500">{aviso.text}</p>
+                      <p className="text-xs text-slate-500 leading-relaxed">{aviso.text}</p>
                     </div>
                   ))}
                 </div>
               </section>
 
-              {/* AGENDA CLICÁVEL */}
+              {/* AGENDA CLICÁVEL - FILTRADA PARA PLACAR APENAS EM ESPORTES */}
               {myReservations.length > 0 && (
                 <section className="text-left">
-                  <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] font-bold mb-4">Sua Agenda</h3>
+                  <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] font-bold mb-4 text-slate-100">Sua Agenda</h3>
                   <div className="space-y-3">
-                    {myReservations.slice(0, 1).map(res => (
-                      <div 
-                        key={res.id} 
-                        onClick={() => {
-                          if (!res.completed) {
-                            setActiveReservation(res);
-                            setBookingStep('post_match');
-                          }
-                        }}
-                        className={`p-5 rounded-2xl flex justify-between items-center transition-all cursor-pointer ${res.completed ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-slate-900/50 border-slate-800 hover:border-amber-400/50'}`}
-                      >
-                        <div className="flex gap-4 items-center">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${res.completed ? 'bg-emerald-500/20 text-emerald-500' : 'bg-amber-400/10 text-amber-400'}`}>
-                            {res.completed ? <CheckCircle2 size={20} /> : (res.date?.split(' ')[0] || "ST")}
+                    {myReservations.slice(0, 1).map(res => {
+                      // Definimos o que é esporte para habilitar o placar
+                      const categoriasEsportivas = [
+                        'Tênis Estádio (Central)', 'Tênis Saibro Coberta', 'Tênis Saibro Aberta', 
+                        'Tênis Rápida Coberta', 'Tênis Rápida Aberta', 'Padel', 'Squash', 'Pickleball'
+                      ];
+                      const isEsporte = categoriasEsportivas.includes(res.category);
+
+                      return (
+                        <div 
+                          key={res.id} 
+                          onClick={() => {
+                            // Só permite abrir a tela de placar se for esporte E não estiver concluído
+                            if (!res.completed && isEsporte) {
+                              setActiveReservation(res);
+                              setBookingStep('post_match');
+                            }
+                          }}
+                          className={`p-5 rounded-2xl flex justify-between items-center transition-all group ${
+                            res.completed 
+                              ? 'bg-emerald-500/5 border border-emerald-500/20' 
+                              : 'bg-slate-900/50 border border-slate-800 hover:border-amber-400/50 cursor-pointer'
+                          }`}
+                        >
+                          <div className="flex gap-4 items-center">
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${
+                              res.completed 
+                                ? 'bg-emerald-500/20 text-emerald-500' 
+                                : 'bg-amber-400/10 text-amber-400'
+                            }`}>
+                              {res.completed ? <CheckCircle2 size={20} /> : (res.date?.split(' ')[0] || "ST")}
+                            </div>
+                            <div>
+                              <p className={`text-sm font-bold ${res.completed ? 'text-emerald-500' : 'text-white'}`}>
+                                {res.category} {res.completed && '• Finalizado'}
+                              </p>
+                              <p className="text-[10px] text-slate-500 uppercase">
+                                {res.completed 
+                                  ? (res.score ? `Placar: ${res.score}` : 'Concluído') 
+                                  : (isEsporte ? `${res.time} • Lançar Placar` : `${res.time} • Agendado`)}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-bold">{res.category}</p>
-                            <p className="text-[10px] text-slate-500 uppercase">{res.time} • {res.completed ? 'Finalizado' : 'Lançar Placar'}</p>
-                          </div>
+                          
+                          {/* Só mostra o Troféu se for esporte e não estiver concluído */}
+                          {!res.completed && isEsporte && (
+                            <Trophy size={16} className="text-slate-700 group-hover:text-amber-400 transition-colors" />
+                          )}
                         </div>
-                        <Trophy size={16} className={res.completed ? "text-emerald-500" : "text-slate-700"} />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </section>
               )}
 
               {/* SERVIÇOS CONCIERGE */}
               <section className="text-left">
-                <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] mb-6 font-bold">Serviços Concierge</h3>
+                <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] mb-6 font-bold text-slate-100">Serviços Concierge</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-slate-100">
                   <ServiceCard icon={<Calendar size={24} />} title="Quadras" subtitle="Tênis & Padel" onClick={() => { setSelectedService('Quadra'); setBookingStep('category'); }} />
                   <ServiceCard icon={<Sparkles size={24} />} title="Wellness" subtitle="Spa & Fisio" onClick={() => { setSelectedService('Wellness'); setBookingStep('category'); }} />
