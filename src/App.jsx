@@ -451,13 +451,22 @@ export default function App() {
                 </div>
               </section>
 
-              {/* AGENDA CLICÁVEL - FILTRADA PARA PLACAR APENAS EM ESPORTES */}
+              {/* AGENDA CLICÁVEL */}
               {myReservations.length > 0 && (
-                <section className="text-left">
-                  <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] font-bold mb-4 text-slate-100">Sua Agenda</h3>
+                <section className="text-left animate-in fade-in duration-500">
+                  <div className="flex justify-between items-center mb-4 px-1">
+                    <h3 className="text-slate-500 text-xs uppercase tracking-[0.3em] font-bold">Sua Agenda</h3>
+                    {/* O BOTÃO VOLTOU AQUI: */}
+                    <button 
+                      onClick={() => setBookingStep('view_reservations')} 
+                      className="text-amber-400 text-[10px] font-bold uppercase underline tracking-wider active:opacity-50 transition-all"
+                    >
+                      Ver Todos
+                    </button>
+                  </div>
+
                   <div className="space-y-3">
                     {myReservations.slice(0, 1).map(res => {
-                      // Definimos o que é esporte para habilitar o placar
                       const categoriasEsportivas = [
                         'Tênis Estádio (Central)', 'Tênis Saibro Coberta', 'Tênis Saibro Aberta', 
                         'Tênis Rápida Coberta', 'Tênis Rápida Aberta', 'Padel', 'Squash', 'Pickleball'
@@ -468,7 +477,6 @@ export default function App() {
                         <div 
                           key={res.id} 
                           onClick={() => {
-                            // Só permite abrir a tela de placar se for esporte E não estiver concluído
                             if (!res.completed && isEsporte) {
                               setActiveReservation(res);
                               setBookingStep('post_match');
@@ -482,9 +490,7 @@ export default function App() {
                         >
                           <div className="flex gap-4 items-center">
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${
-                              res.completed 
-                                ? 'bg-emerald-500/20 text-emerald-500' 
-                                : 'bg-amber-400/10 text-amber-400'
+                              res.completed ? 'bg-emerald-500/20 text-emerald-500' : 'bg-amber-400/10 text-amber-400'
                             }`}>
                               {res.completed ? <CheckCircle2 size={20} /> : (res.date?.split(' ')[0] || "ST")}
                             </div>
@@ -499,8 +505,6 @@ export default function App() {
                               </p>
                             </div>
                           </div>
-                          
-                          {/* Só mostra o Troféu se for esporte e não estiver concluído */}
                           {!res.completed && isEsporte && (
                             <Trophy size={16} className="text-slate-700 group-hover:text-amber-400 transition-colors" />
                           )}
